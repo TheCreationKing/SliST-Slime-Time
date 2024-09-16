@@ -52,101 +52,104 @@
         </div>
     </div>
 
-    <script>
-        const selectors = {
-            timeFormat: document.getElementById('timeFormatSelector'),
-            hourInput: document.getElementById('hourInput'),
-            minuteInput: document.getElementById('minuteInput'),
-            secondInput: document.getElementById('secondInput'),
-            ampmSelector: document.getElementById('ampmSelector'),
-            customTime: document.getElementById('customTime'),
-            manualConversionSection: document.getElementById('manualConversionSection'),
-            manualConversionResult: document.getElementById('manualConversionResult')
-        };
+<script>
+    const selectors = {
+        timeFormat: document.getElementById('timeFormatSelector'),
+        hourInput: document.getElementById('hourInput'),
+        minuteInput: document.getElementById('minuteInput'),
+        secondInput: document.getElementById('secondInput'),
+        ampmSelector: document.getElementById('ampmSelector'),
+        customTime: document.getElementById('customTime'),
+        manualConversionSection: document.getElementById('manualConversionSection'),
+        manualConversionResult: document.getElementById('manualConversionResult')
+    };
 
-        let timeZoneOffset = 0;
+    let timeZoneOffset = 0;
 
-        const formatTime = (hour, minute, second, period) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
-        const to12HourFormat = hours => {
-            const period = hours >= 12 ? 'PM' : 'AM';
-            return { hours: hours % 12 || 12, period };
-        };
+    const formatTime = (hour, minute, second, period) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
+    const to12HourFormat = hours => {
+        const period = hours >= 12 ? 'PM' : 'AM';
+        return { hours: hours % 12 || 12, period };
+    };
 
-        const updateTimes = () => {
-            const now = new Date();
-            const utcTime = new Date(now.toISOString());
-            const totalMinutes = utcTime.getUTCHours() * 60 + utcTime.getUTCMinutes();
+    const updateTimes = () => {
+        const now = new Date();
+        const utcTime = new Date(now.toISOString());
+        const totalMinutes = utcTime.getUTCHours() * 60 + utcTime.getUTCMinutes();
+        const customHour = Math.floor(totalMinutes / 72);
+        const customMinute = totalMinutes % 72;
+        const customSecond = utcTime.getUTCSeconds();
+        const format = selectors.timeFormat.value;
+
+        if (format === 'military') {
+            selectors.customTime.innerHTML = formatTime(customHour, customMinute, customSecond, '(Military)');
+        } else if (format === 'nonMilitary') {
+            const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
+            selectors.customTime.innerHTML = formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm');
+        } else {
+            selectors.customTime.innerHTML = 'Manual Conversion Not Implemented Yet';
+        }
+    };
+
+    const updateManualConversion = () => {
+        const hour = parseInt(selectors.hourInput.value) || 0;
+        const minute = parseInt(selectors.minuteInput.value) || 0;
+        const second = parseInt(selectors.secondInput.value) || 0;
+        const ampm = selectors.ampmSelector.value;
+
+        if (ampm === 'SlAm' || ampm === 'SlIm') {
+            let sliSTHour = hour + (ampm === 'SlIm' ? 10 : 0);
+            if (sliSTHour === 10 && ampm === 'SlAm') sliSTHour = 0;
+
+            const totalMinutes = sliSTHour * 72 + minute;
+            const utcHours = Math.floor(totalMinutes / 60);
+            const utcMinutes = totalMinutes % 60;
+
+            const localDate = new Date();
+            localDate.setUTCHours(utcHours - timeZoneOffset, utcMinutes, second, 0);
+
+            const { hours, period } = to12HourFormat(localDate.getHours());
+            selectors.manualConversionResult.textContent = `Local Time: ${formatTime(hours, localDate.getMinutes(), localDate.getSeconds(), period)}`;
+        } else {
+            let localHours = hour + (ampm === 'PM' && hour !== 12 ? 12 : 0) - (ampm === 'AM' && hour === 12 ? 12 : 0);
+            const localDate = new Date();
+            localDate.setHours(localHours, minute, second, 0);
+
+            const utcDate = new Date(localDate.getTime() + timeZoneOffset * 60 * 60 * 1000);
+            const totalMinutes = utcDate.getUTCHours() * 60 + utcDate.getUTCMinutes();
             const customHour = Math.floor(totalMinutes / 72);
             const customMinute = totalMinutes % 72;
-            const customSecond = utcTime.getUTCSeconds();
-            const format = selectors.timeFormat.value;
+            const customSecond = utcDate.getUTCSeconds();
+            const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
 
-            if (format === 'military') {
-                selectors.customTime.innerHTML = formatTime(customHour, customMinute, customSecond, '(Military)');
-            } else if (format === 'nonMilitary') {
-                const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
-                selectors.customTime.innerHTML = formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm');
-            } else {
-                selectors.customTime.innerHTML = 'Manual Conversion Not Implemented Yet';
-            }
-        };
+            selectors.manualConversionResult.textContent = `SliST Time: ${formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm')}`;
+        }
+    };
 
-        const updateManualConversion = () => {
-            const hour = parseInt(selectors.hourInput.value) || 0;
-            const minute = parseInt(selectors.minuteInput.value) || 0;
-            const second = parseInt(selectors.secondInput.value) || 0;
-            const ampm = selectors.ampmSelector.value;
+    const updateUI = () => {
+        const isManual = selectors.timeFormat.value === 'manual';
+        selectors.manualConversionSection.style.display = isManual ? 'block' : 'none';
+        selectors.customTime.style.display = isManual ? 'none' : 'block';
+        updateTimes();
+    };
 
-            if (ampm === 'SlAm' || ampm === 'SlIm') {
-                let sliSTHour = hour + (ampm === 'SlIm' ? 10 : 0);
-                if (sliSTHour === 10 && ampm === 'SlAm') sliSTHour = 0;
+    const calculateTimeZoneOffset = () => {
+        const localTime = new Date();
+        const utcTime = new Date(localTime.toISOString());
+        timeZoneOffset = (localTime - utcTime) / (1000 * 60 * 60);
+        updateUI(); // Ensure UI is updated after calculating offset
+    };
 
-                const totalMinutes = sliSTHour * 72 + minute;
-                const utcHours = Math.floor(totalMinutes / 60);
-                const utcMinutes = totalMinutes % 60;
-
-                const localDate = new Date();
-                localDate.setUTCHours(utcHours - timeZoneOffset, utcMinutes, second, 0);
-
-                const { hours, period } = to12HourFormat(localDate.getHours());
-                selectors.manualConversionResult.textContent = `Local Time: ${formatTime(hours, localDate.getMinutes(), localDate.getSeconds(), period)}`;
-            } else {
-                let localHours = hour + (ampm === 'PM' && hour !== 12 ? 12 : 0) - (ampm === 'AM' && hour === 12 ? 12 : 0);
-                const localDate = new Date();
-                localDate.setHours(localHours, minute, second, 0);
-
-                const utcDate = new Date(localDate.getTime() + timeZoneOffset * 60 * 60 * 1000);
-                const totalMinutes = utcDate.getUTCHours() * 60 + utcDate.getUTCMinutes();
-                const customHour = Math.floor(totalMinutes / 72);
-                const customMinute = totalMinutes % 72;
-                const customSecond = utcDate.getUTCSeconds();
-                const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
-
-                selectors.manualConversionResult.textContent = `SliST Time: ${formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm')}`;
-            }
-        };
-
-        const updateUI = () => {
-            const isManual = selectors.timeFormat.value === 'manual';
-            selectors.manualConversionSection.style.display = isManual ? 'block' : 'none';
-            selectors.customTime.style.display = isManual ? 'none' : 'block';
-            updateTimes();
-        };
-
-        const calculateTimeZoneOffset = () => {
-            const localTime = new Date();
-            const utcTime = new Date(localTime.toISOString());
-            timeZoneOffset = (localTime - utcTime) / (1000 * 60 * 60);
-        };
-
-        window.onload = calculateTimeZoneOffset;
-
+    window.onload = () => {
+        calculateTimeZoneOffset();
         setInterval(updateTimes, 1000);
+    };
 
-        selectors.timeFormat.addEventListener('change', updateUI);
-        ['hourInput', 'minuteInput', 'secondInput', 'ampmSelector'].forEach(id => {
-            selectors[id].addEventListener('input', updateManualConversion);
-        });
-    </script>
+    ['hourInput', 'minuteInput', 'secondInput', 'ampmSelector'].forEach(id => {
+        selectors[id].addEventListener('input', updateManualConversion);
+    });
+    selectors.timeFormat.addEventListener('change', updateUI);
+</script>
+
 </body>
 </html>
