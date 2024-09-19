@@ -66,17 +66,21 @@
 
     let timeZoneOffset = 0;
 
-    const formatTime = (hour, minute, second, period) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
+    // Updated formatting function for 12-hour format
     const to12HourFormat = hours => {
-        const period = hours >= 12 ? 'PM' : 'AM';
-        return { hours: hours % 12 || 12, period };
+        const period = hours >= 10 ? 'SlIm' : 'SlAm';
+        const adjustedHours = hours % 10; // Adjust to 0-9 range for SliST
+        return { hours: adjustedHours, period };
     };
+
+    const formatTime = (hour, minute, second, period) => 
+        `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
 
     const updateTimes = () => {
         const now = new Date();
         const utcTime = new Date(now.toISOString());
         const totalMinutes = utcTime.getUTCHours() * 60 + utcTime.getUTCMinutes();
-        const customHour = Math.floor(totalMinutes / 72);
+        const customHour = Math.floor(totalMinutes / 72); // Divide total minutes by 72 for SliST time
         const customMinute = totalMinutes % 72;
         const customSecond = utcTime.getUTCSeconds();
         const format = selectors.timeFormat.value;
@@ -84,8 +88,8 @@
         if (format === 'military') {
             selectors.customTime.innerHTML = formatTime(customHour, customMinute, customSecond, '(Military)');
         } else if (format === 'nonMilitary') {
-            const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
-            selectors.customTime.innerHTML = formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm');
+            const { hours, period } = to12HourFormat(customHour);
+            selectors.customTime.innerHTML = formatTime(hours, customMinute, customSecond, period);
         } else {
             selectors.customTime.innerHTML = 'Manual Conversion Not Implemented Yet';
         }
@@ -120,9 +124,9 @@
             const customHour = Math.floor(totalMinutes / 72);
             const customMinute = totalMinutes % 72;
             const customSecond = utcDate.getUTCSeconds();
-            const { hours, period } = to12HourFormat(customHour < 10 ? customHour : customHour - 10);
+            const { hours, period } = to12HourFormat(customHour);
 
-            selectors.manualConversionResult.textContent = `SliST Time: ${formatTime(hours, customMinute, customSecond, customHour < 10 ? 'SlAm' : 'SlIm')}`;
+            selectors.manualConversionResult.textContent = `SliST Time: ${formatTime(hours, customMinute, customSecond, period)}`;
         }
     };
 
@@ -150,6 +154,7 @@
     });
     selectors.timeFormat.addEventListener('change', updateUI);
 </script>
+
 
 </body>
 </html>
