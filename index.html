@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UST to Custom Time Conversion</title>
 
-    <!-- Open Graph Metadata -->
-    <meta property="og:title" content="SliST - Slime Time">
-    <meta property="og:description" content="Convert between normie time and Slime time for a step towards a slimer future!">
-    <meta property="og:url" content="https://thecreationking.github.io/SliST-Slime-Time/">
-    <meta property="og:type" content="website">
-
     <style>
         body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
         h1 { margin: 10px 0; font-size: 2rem; color: #333; }
@@ -21,6 +15,7 @@
         .conversion-row { display: flex; justify-content: center; align-items: center; }
         .conversion-row input { width: 60px; }
         .conversion-row span { margin: 0 10px; font-size: 1.2rem; }
+        #manualConversionSection p { font-size: 1.2rem; color: #333; }
     </style>
 </head>
 <body>
@@ -33,22 +28,28 @@
     <div id="timeContainer" class="time-container">
         <h1>Slime Time (SliST)</h1>
         <p id="customTime"></p>
+
+        <!-- Manual Conversion Section -->
         <div id="manualConversionSection" class="conversion-section">
             <div class="conversion-row">
                 <input type="number" id="hourInput" min="0" max="12" placeholder="Hour">
                 <span>:</span>
-                <input type="number" id="minuteInput" min="0" max="59" placeholder="Minute">
+                <input type="number" id="minuteInput" min="0" max="71" placeholder="Minute">
                 <span>:</span>
                 <input type="number" id="secondInput" min="0" max="59" placeholder="Second">
                 <span>:</span>
-                <select id="ampmSelector">
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                    <option value="SlAm">SlAm</option>
-                    <option value="SlIm">SlIm</option>
+                <select id="modeSelector">
+                    <option value="LTZ-SlAm">AM</option>
+                    <option value="LTZ-SlIm">PM</option>
+                    <option value="SliST-AM">SlAm</option>
+                    <option value="SliST-PM">SlIm</option>
                 </select>
             </div>
             <p id="manualConversionResult"></p>
+        </div>
+
+        <div id="manualConversionSection2" class="conversion-section">
+            <p id="displacementDisplay"></p>
         </div>
     </div>
 
@@ -58,103 +59,151 @@
         hourInput: document.getElementById('hourInput'),
         minuteInput: document.getElementById('minuteInput'),
         secondInput: document.getElementById('secondInput'),
-        ampmSelector: document.getElementById('ampmSelector'),
+        modeSelector: document.getElementById('modeSelector'),
         customTime: document.getElementById('customTime'),
         manualConversionSection: document.getElementById('manualConversionSection'),
-        manualConversionResult: document.getElementById('manualConversionResult')
+        manualConversionResult: document.getElementById('manualConversionResult'),
+        displacementDisplay: document.getElementById('displacementDisplay'),
+        manualConversionSection2: document.getElementById('manualConversionSection2'),
     };
 
     let timeZoneOffset = 0;
 
-    // Updated formatting function for 12-hour format
-    const to12HourFormat = hours => {
-        const period = hours >= 10 ? 'SlIm' : 'SlAm';
-        const adjustedHours = hours % 10; // Adjust to 0-9 range for SliST
-        return { hours: adjustedHours, period };
-    };
-
-    const formatTime = (hour, minute, second, period) => 
-        `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
-
-    const updateTimes = () => {
+    // Function to update the displacement text
+    const updateDisplacement = () => {
         const now = new Date();
-        const utcTime = new Date(now.toISOString());
-        const totalMinutes = utcTime.getUTCHours() * 60 + utcTime.getUTCMinutes();
-        const customHour = Math.floor(totalMinutes / 72); // Divide total minutes by 72 for SliST time
-        const customMinute = totalMinutes % 72;
-        const customSecond = utcTime.getUTCSeconds();
-        const format = selectors.timeFormat.value;
-
-        if (format === 'military') {
-            selectors.customTime.innerHTML = formatTime(customHour, customMinute, customSecond, '(Military)');
-        } else if (format === 'nonMilitary') {
-            const { hours, period } = to12HourFormat(customHour);
-            selectors.customTime.innerHTML = formatTime(hours, customMinute, customSecond, period);
-        } else {
-            selectors.customTime.innerHTML = 'Manual Conversion Not Implemented Yet';
-        }
+        const displacement = now.getTimezoneOffset(); // This returns the displacement in minutes;
     };
 
     const updateManualConversion = () => {
         const hour = parseInt(selectors.hourInput.value) || 0;
         const minute = parseInt(selectors.minuteInput.value) || 0;
         const second = parseInt(selectors.secondInput.value) || 0;
-        const ampm = selectors.ampmSelector.value;
+        const mode = selectors.modeSelector.value;
 
-        if (ampm === 'SlAm' || ampm === 'SlIm') {
-            let sliSTHour = hour + (ampm === 'SlIm' ? 10 : 0);
-            if (sliSTHour === 10 && ampm === 'SlAm') sliSTHour = 0;
+        let totalMinutes;
+        let convertedHour, convertedMinute;
 
-            const totalMinutes = sliSTHour * 72 + minute;
-            const utcHours = Math.floor(totalMinutes / 60);
-            const utcMinutes = totalMinutes % 60;
+        // Get the displacement value dynamically
+        const displacement = new Date().getTimezoneOffset(); // This returns the displacement in minutes
 
-            const localDate = new Date();
-            localDate.setUTCHours(utcHours - timeZoneOffset, utcMinutes, second, 0);
+        // Conversion logic based on SliST or LTZ
+        if (mode === 'SliST-AM' || mode === 'SliST-PM') {
+            // Add 720 minutes for AM/PM modes
+            totalMinutes = (hour * 72) + minute + 720 - displacement;
 
-            const { hours, period } = to12HourFormat(localDate.getHours());
-            selectors.manualConversionResult.textContent = `Local Time: ${formatTime(hours, localDate.getMinutes(), localDate.getSeconds(), period)}`;
-        } else {
-            let localHours = hour + (ampm === 'PM' && hour !== 12 ? 12 : 0) - (ampm === 'AM' && hour === 12 ? 12 : 0);
-            const localDate = new Date();
-            localDate.setHours(localHours, minute, second, 0);
+            // Ensure the total minutes stay within 0-1440
+            totalMinutes = ((totalMinutes % 1440) + 1440) % 1440; // This handles both positive and negative overflow
 
-            const utcDate = new Date(localDate.getTime() + timeZoneOffset * 60 * 60 * 1000);
-            const totalMinutes = utcDate.getUTCHours() * 60 + utcDate.getUTCMinutes();
-            const customHour = Math.floor(totalMinutes / 72);
-            const customMinute = totalMinutes % 72;
-            const customSecond = utcDate.getUTCSeconds();
-            const { hours, period } = to12HourFormat(customHour);
+            // Convert back to hours and minutes
+            convertedHour = Math.floor(totalMinutes / 60); // 60 minutes per hour
+            convertedMinute = totalMinutes % 60;
+        } else if (mode === 'LTZ-SlAm' || mode === 'LTZ-SlIm') {
+            // Add 720 minutes for SlAm/SlIm modes
+            totalMinutes = (hour * 60) + minute + 720 + displacement;
 
-            selectors.manualConversionResult.textContent = `SliST Time: ${formatTime(hours, customMinute, customSecond, period)}`;
+            // Ensure the total minutes stay within 0-1440
+            totalMinutes = ((totalMinutes % 1440) + 1440) % 1440; // This handles both positive and negative overflow
+
+            // Convert back to hours and minutes
+            convertedHour = Math.floor(totalMinutes / 72); // 72 minutes per hour in LTZ mode
+            convertedMinute = totalMinutes % 72;
+        }
+
+        // Display based on mode
+        if (mode === 'SliST-AM' || mode === 'SliST-PM') {
+            // In SliST mode, display hour in 12-hour format with AM/PM
+            const period = mode === 'SliST-AM' ? 'AM' : 'PM';
+            const displayHour = convertedHour % 12 || 12; // Convert to 12-hour format
+            selectors.manualConversionResult.textContent = `${displayHour}:${String(convertedMinute).padStart(2, '0')} ${period}`;
+        } else if (mode === 'LTZ-SlAm' || mode === 'LTZ-SlIm') {
+            // In LTZ mode, use "SlIm" or "SlAm" based on the hour value
+            const period = mode === 'LTZ-SlIm' ? 'SlIm' : 'SlAm';
+            const displayHour = convertedHour % 10; // Display the hour with modulo 10
+            selectors.manualConversionResult.textContent = `${String(displayHour).padStart(2, '0')}:${String(convertedMinute).padStart(2, '0')} ${period}`;
         }
     };
 
-    const updateUI = () => {
-        const isManual = selectors.timeFormat.value === 'manual';
-        selectors.manualConversionSection.style.display = isManual ? 'block' : 'none';
-        selectors.customTime.style.display = isManual ? 'none' : 'block';
-        updateTimes();
-    };
 
+let isFirstConversion = true; // Track first entry into conversion mode
+
+const setDefaultConversionValues = () => {
+    if (isFirstConversion) {
+        const now = new Date();
+        const hour = now.getHours() % 12 || 12; // 12-hour format
+        const minute = now.getMinutes();
+        const period = now.getHours() >= 12 ? 'LTZ-SlIm' : 'LTZ-SlAm'; // Default mode
+
+        selectors.hourInput.value = hour;
+        selectors.minuteInput.value = minute;
+        selectors.secondInput.value = 0; // Default to 00 seconds
+        selectors.modeSelector.value = period;
+
+        updateManualConversion(); // Trigger the output immediately
+        isFirstConversion = false; // Ensure this runs only once
+    }
+};
+
+const updateUI = () => {
+    const isManual = selectors.timeFormat.value === 'manual';
+
+    if (isManual) {
+        setDefaultConversionValues(); // Pre-fill fields on first access
+    }
+
+    selectors.manualConversionSection.style.display = isManual ? 'block' : 'none';
+    selectors.customTime.style.display = isManual ? 'none' : 'block';
+    selectors.manualConversionSection2.style.display = isManual ? 'block' : 'none';
+
+    if (!isManual) {
+        const now = new Date();
+        let totalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+        const totalMinutesFloored = Math.floor(totalMinutes / 1440);
+        totalMinutes -= totalMinutesFloored * 1440;
+
+        const customHour = Math.floor(totalMinutes / 72); 
+        const customMinute = totalMinutes % 72;
+        const customSecond = now.getUTCSeconds(); // Getting the current second
+        const format = selectors.timeFormat.value;
+
+        if (format === 'military') {
+            // Display time in military format including seconds
+            selectors.customTime.textContent = 
+                `${String(customHour).padStart(2, '0')}:${String(customMinute).padStart(2, '0')}:` + 
+                `${String(customSecond).padStart(2, '0')} (Military)`;
+        } else if (format === 'nonMilitary') {
+            const period = customHour >= 10 ? 'SlIm' : 'SlAm';
+            const displayHour = customHour % 10;
+            // Display time with seconds in non-military format
+            selectors.customTime.textContent = 
+                `${String(displayHour).padStart(2, '0')}:${String(customMinute).padStart(2, '0')}:` + 
+                `${String(customSecond).padStart(2, '0')} ${period}`; // Including seconds
+        }
+    }
+
+    updateDisplacement();
+};
+
+
+    // Function to calculate time zone offset
     const calculateTimeZoneOffset = () => {
         const localTime = new Date();
         const utcTime = new Date(localTime.toISOString());
-        timeZoneOffset = (localTime - utcTime) / (1000 * 60 * 60);
+        timeZoneOffset = (localTime - utcTime) / (1000 * 60); // Get offset in minutes
         updateUI(); // Ensure UI is updated after calculating offset
     };
 
     window.onload = () => {
         calculateTimeZoneOffset();
-        setInterval(updateTimes, 1000);
+        setInterval(updateUI, 1000); // Update every second
     };
 
-    ['hourInput', 'minuteInput', 'secondInput', 'ampmSelector'].forEach(id => {
+    // Event listeners
+    ['hourInput', 'minuteInput', 'secondInput', 'modeSelector'].forEach(id => {
         selectors[id].addEventListener('input', updateManualConversion);
     });
     selectors.timeFormat.addEventListener('change', updateUI);
 </script>
-
 
 </body>
 </html>
