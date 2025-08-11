@@ -1,209 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UST to Custom Time Conversion</title>
-
+    <title>(SliST)</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        h1 { margin: 10px 0; font-size: 2rem; color: #333; }
-        p { font-size: 1.5rem; color: #555; }
-        .time-container { margin: 20px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; }
-        select, input { margin: 5px; font-size: 1.2rem; padding: 5px; }
-        .conversion-section { display: none; text-align: center; }
-        .conversion-row { display: flex; justify-content: center; align-items: center; }
-        .conversion-row input { width: 60px; }
-        .conversion-row span { margin: 0 10px; font-size: 1.2rem; }
-        #manualConversionSection p { font-size: 1.2rem; color: #333; }
+        :root {
+            --slime-color1: #8ef58e;
+            --slime-color2: #4bc34b;
+        }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #111; color: var(--slime-color1); }
+        .clock { font-size: 2em; margin: 20px; }
+        input, select { margin: 5px; padding: 8px; font-size: 1em; border-radius: 10px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .menu { margin: 20px; }
+        .container-box { background: linear-gradient(135deg, var(--slime-color1), var(--slime-color2)); padding: 20px; border-radius: 15px; display: inline-block; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        #dialMenu { background: none; box-shadow: none; }
+        canvas { background: #111; border-radius: 10px; }
     </style>
 </head>
 <body>
-    <select id="timeFormatSelector">
-        <option value="nonMilitary">Default</option>
-        <option value="military">Silly Terry Slime</option>
-        <option value="manual">Manual Conversion</option>
-    </select>
+    <h1>Universal Slime Time</h1>
+    <div class="menu">
+        <select id="viewSelector">
+            <option value="clock">Clock</option>
+            <option value="conversion">Conversion</option>
+            <option value="dial">Dial View</option>
+        </select>
+    </div>
 
-    <div id="timeContainer" class="time-container">
-        <h1>Slime Time (SliST)</h1>
-        <p id="customTime"></p>
+    <!-- Clock view -->
+    <div id="clockMenu" class="container-box">
+        <div class="clock" id="slimeClock"></div>
+        <div class="clock" id="slimeMilitary"></div>
+    </div>
 
-        <!-- Manual Conversion Section -->
-        <div id="manualConversionSection" class="conversion-section">
-            <div class="conversion-row">
-                <input type="number" id="hourInput" min="0" max="12" placeholder="Hour">
-                <span>:</span>
-                <input type="number" id="minuteInput" min="0" max="71" placeholder="Minute">
-                <span>:</span>
-                <input type="number" id="secondInput" min="0" max="59" placeholder="Second">
-                <span>:</span>
-                <select id="modeSelector">
-                    <option value="LTZ-SlAm">AM</option>
-                    <option value="LTZ-SlIm">PM</option>
-                    <option value="SliST-AM">SlAm</option>
-                    <option value="SliST-PM">SlIm</option>
-                </select>
-            </div>
-            <p id="manualConversionResult"></p>
+    <!-- Conversion view -->
+    <div id="conversionMenu" class="container-box" style="display:none;">
+        <div>
+            <label>Local Time: <input type="time" id="localTime"></label>
+            <p id="localToSlimeResult"></p>
         </div>
-
-        <div id="manualConversionSection2" class="conversion-section">
-            <p id="displacementDisplay"></p>
+        <div>
+            <label>Slour (0–10): <input type="number" id="slour" min="0" max="10"></label>
+            <label>Minutes (0–71): <input type="number" id="slourMin" min="0" max="71"></label>
+            <select id="SlAmSlImToggle">
+                <option value="0">SlAm</option>
+                <option value="10">SlIm</option>
+              </select>
+            <p id="slimeToLocalResult"></p>
         </div>
     </div>
 
+    <!-- Dial view -->
+    <div id="dialMenu" style="display:none;">
+        <canvas id="DialRenderer" width="520" height="520"></canvas>
+    </div>
+
 <script>
-    const selectors = {
-        timeFormat: document.getElementById('timeFormatSelector'),
-        hourInput: document.getElementById('hourInput'),
-        minuteInput: document.getElementById('minuteInput'),
-        secondInput: document.getElementById('secondInput'),
-        modeSelector: document.getElementById('modeSelector'),
-        customTime: document.getElementById('customTime'),
-        manualConversionSection: document.getElementById('manualConversionSection'),
-        manualConversionResult: document.getElementById('manualConversionResult'),
-        displacementDisplay: document.getElementById('displacementDisplay'),
-        manualConversionSection2: document.getElementById('manualConversionSection2'),
-    };
-
-    let timeZoneOffset = 0;
-
-    // Function to update the displacement text
-    const updateDisplacement = () => {
-        const now = new Date();
-        const displacement = now.getTimezoneOffset(); // This returns the displacement in minutes;
-    };
-
-    const updateManualConversion = () => {
-        const hour = parseInt(selectors.hourInput.value) || 0;
-        const minute = parseInt(selectors.minuteInput.value) || 0;
-        const second = parseInt(selectors.secondInput.value) || 0;
-        const mode = selectors.modeSelector.value;
-
-        let totalMinutes;
-        let convertedHour, convertedMinute;
-
-        // Get the displacement value dynamically
-        const displacement = new Date().getTimezoneOffset(); // This returns the displacement in minutes
-
-        // Conversion logic based on SliST or LTZ
-        if (mode === 'SliST-AM' || mode === 'SliST-PM') {
-            // Add 720 minutes for AM/PM modes
-            totalMinutes = (hour * 72) + minute + 720 - displacement;
-
-            // Ensure the total minutes stay within 0-1440
-            totalMinutes = ((totalMinutes % 1440) + 1440) % 1440; // This handles both positive and negative overflow
-
-            // Convert back to hours and minutes
-            convertedHour = Math.floor(totalMinutes / 60); // 60 minutes per hour
-            convertedMinute = totalMinutes % 60;
-        } else if (mode === 'LTZ-SlAm' || mode === 'LTZ-SlIm') {
-            // Add 720 minutes for SlAm/SlIm modes
-            totalMinutes = (hour * 60) + minute + 720 + displacement;
-
-            // Ensure the total minutes stay within 0-1440
-            totalMinutes = ((totalMinutes % 1440) + 1440) % 1440; // This handles both positive and negative overflow
-
-            // Convert back to hours and minutes
-            convertedHour = Math.floor(totalMinutes / 72); // 72 minutes per hour in LTZ mode
-            convertedMinute = totalMinutes % 72;
-        }
-
-        // Display based on mode
-        if (mode === 'SliST-AM' || mode === 'SliST-PM') {
-            // In SliST mode, display hour in 12-hour format with AM/PM
-            const period = mode === 'SliST-AM' ? 'AM' : 'PM';
-            const displayHour = convertedHour % 12 || 12; // Convert to 12-hour format
-            selectors.manualConversionResult.textContent = `${displayHour}:${String(convertedMinute).padStart(2, '0')} ${period}`;
-        } else if (mode === 'LTZ-SlAm' || mode === 'LTZ-SlIm') {
-            // In LTZ mode, use "SlIm" or "SlAm" based on the hour value
-            const period = mode === 'LTZ-SlIm' ? 'SlIm' : 'SlAm';
-            const displayHour = convertedHour % 10; // Display the hour with modulo 10
-            selectors.manualConversionResult.textContent = `${String(displayHour).padStart(2, '0')}:${String(convertedMinute).padStart(2, '0')} ${period}`;
-        }
-    };
-
-
-let isFirstConversion = true; // Track first entry into conversion mode
-
-const setDefaultConversionValues = () => {
-    if (isFirstConversion) {
-        const now = new Date();
-        const hour = now.getHours() % 12 || 12; // 12-hour format
-        const minute = now.getMinutes();
-        const period = now.getHours() >= 12 ? 'LTZ-SlIm' : 'LTZ-SlAm'; // Default mode
-
-        selectors.hourInput.value = hour;
-        selectors.minuteInput.value = minute;
-        selectors.secondInput.value = 0; // Default to 00 seconds
-        selectors.modeSelector.value = period;
-
-        updateManualConversion(); // Trigger the output immediately
-        isFirstConversion = false; // Ensure this runs only once
+    /* ==== Original clock + conversion ==== */
+    function toSliST(date) {
+        let utcMinutes = Math.floor(date.getUTCHours() * 60 + date.getUTCMinutes());
+        let totalSlours = utcMinutes / 72;
+        let slour = Math.floor(totalSlours);
+        let minutesInSlour = Math.round((totalSlours - slour) * 72);
+        return { slour, minutesInSlour };
     }
-};
-
-const updateUI = () => {
-    const isManual = selectors.timeFormat.value === 'manual';
-
-    if (isManual) {
-        setDefaultConversionValues(); // Pre-fill fields on first access
+    function formatSliST(slour, minutes) {
+        let ampm = slour < 10 ? 'SlAm' : 'SlIm';
+        let displaySlour = slour % 10 ;
+        return `${displaySlour}:${minutes.toString().padStart(2,'0')} ${ampm}`;
+    }
+    function updateClock() {
+        let now = new Date();
+        let slime = toSliST(now);
+        document.getElementById('slimeClock').innerText = " " + formatSliST(slime.slour, slime.minutesInSlour);
+        document.getElementById('slimeMilitary').innerText = `Silly Terry Slime: ${slime.slour}:${slime.minutesInSlour.toString().padStart(2,'0')}`;
+    }
+    function localToSliST() {
+        let timeStr = document.getElementById('localTime').value;
+        if (!timeStr) return;
+        let [hours, minutes] = timeStr.split(":").map(Number);
+        let now = new Date();
+        now.setHours(hours);
+        now.setMinutes(minutes);
+        let slime = toSliST(now);
+        document.getElementById('localToSlimeResult').innerText = formatSliST(slime.slour, slime.minutesInSlour) + ` (Military: ${slime.slour}:${slime.minutesInSlour.toString().padStart(2,'0')})`;
+        document.getElementById('slour').value = slime.slour%10;
+        document.getElementById('slourMin').value = slime.minutesInSlour;
+        document.getElementById('SlAmSlImToggle').value = slime.slour >= 10 ? 10 : 0;
+    }
+    function slistToLocal() {
+        let slour = parseInt(document.getElementById('slour').value)+ parseInt(document.getElementById('SlAmSlImToggle').value);
+        let minutes = parseInt(document.getElementById('slourMin').value);
+        if (isNaN(slour) || isNaN(minutes)) return;
+        let totalMinutesUTC = slour * 72 + minutes;
+        let hoursUTC = Math.floor(totalMinutesUTC / 60);
+        let minsUTC = totalMinutesUTC % 60;
+        let now = new Date();
+        let offsetMinutes = now.getTimezoneOffset();
+        let localMinutes = (hoursUTC * 60 + minsUTC - offsetMinutes + 1440) % 1440;
+        let localHours = Math.floor(localMinutes / 60);
+        let localMins = localMinutes % 60;
+        document.getElementById('slimeToLocalResult').innerText = `${(localHours%12||12).toString().padStart(2,'0')}:${localMins.toString().padStart(2,'0') + (localHours >= 12 ? " PM":" AM")}`;
     }
 
-    selectors.manualConversionSection.style.display = isManual ? 'block' : 'none';
-    selectors.customTime.style.display = isManual ? 'none' : 'block';
-    selectors.manualConversionSection2.style.display = isManual ? 'block' : 'none';
+    /* ==== Dial code merged from second HTML ==== */
+    const innerCanvas = document.getElementById('DialRenderer');
+    const innerCtx = innerCanvas.getContext('2d');
+    const centerX = innerCanvas.width / 2;
+    const centerY = innerCanvas.height / 2;
 
-    if (!isManual) {
-        const now = new Date();
-        let totalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
-        const totalMinutesFloored = Math.floor(totalMinutes / 1440);
-        totalMinutes -= totalMinutesFloored * 1440;
-
-        const customHour = Math.floor(totalMinutes / 72); 
-        const customMinute = totalMinutes % 72;
-        const customSecond = now.getUTCSeconds(); // Getting the current second
-        const format = selectors.timeFormat.value;
-
-        if (format === 'military') {
-            // Display time in military format including seconds
-            selectors.customTime.textContent = 
-                `${String(customHour).padStart(2, '0')}:${String(customMinute).padStart(2, '0')}:` + 
-                `${String(customSecond).padStart(2, '0')} (Military)`;
-        } else if (format === 'nonMilitary') {
-            const period = customHour >= 10 ? 'SlIm' : 'SlAm';
-            const displayHour = customHour % 10;
-            // Display time with seconds in non-military format
-            selectors.customTime.textContent = 
-                `${String(displayHour).padStart(2, '0')}:${String(customMinute).padStart(2, '0')}:` + 
-                `${String(customSecond).padStart(2, '0')} ${period}`; // Including seconds
-        }
+    function drawHalfRing(ctx, radius, thickness, startAngle, color) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI, false);
+        ctx.arc(centerX, centerY, radius - thickness, startAngle + Math.PI, startAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
     }
 
-    updateDisplacement();
-};
+    function drawInnerDial(offsetDegrees = 0) {
+        innerCtx.save();
+        innerCtx.translate(centerX, centerY);
+        innerCtx.rotate((offsetDegrees * Math.PI) / 180);
+        innerCtx.translate(-centerX, -centerY);
+        drawHalfRing(innerCtx, 170, 30, -Math.PI/2, 'rgb(19, 83, 25)');
+        drawHalfRing(innerCtx, 170, 30, Math.PI/2, 'rgb(57, 19, 83)');
+        innerCtx.strokeStyle = '#ccc';
+        innerCtx.lineWidth = 1.5;
+        innerCtx.font = '14px Arial';
+        innerCtx.textAlign = 'center';
+        innerCtx.textBaseline = 'middle';
+        for(let i = 0; i < 20; i++) {
+            let angle = (i / 20) * 2 * Math.PI - Math.PI/2;
+            let outerRadius = 170;
+            let innerRadius = i % 5 === 0 ? outerRadius - 20 : outerRadius - 5;
+            let x1 = centerX + outerRadius * Math.cos(angle);
+            let y1 = centerY + outerRadius * Math.sin(angle);
+            let x2 = centerX + innerRadius * Math.cos(angle);
+            let y2 = centerY + innerRadius * Math.sin(angle);
+            innerCtx.beginPath();
+            innerCtx.moveTo(x1, y1);
+            innerCtx.lineTo(x2, y2);
+            innerCtx.stroke();
+        }
+        for(let i = 0; i < 20; i++) {
+            let angle = (i / 20) * 2 * Math.PI - Math.PI/2;
+            let labelRadius = 125;
+            let lx = centerX + labelRadius * Math.cos(angle);
+            let ly = centerY + labelRadius * Math.sin(angle);
+            innerCtx.fillStyle = '#ccc';
+            innerCtx.font = i % 5 === 0 ? 'bold 16px Arial' : '12px Arial';
+            let numberText = i % 10 === 0 ? 10 : i % 10;
+            innerCtx.fillText(numberText, lx, ly);
+        }
+        innerCtx.font = '20px Arial';
+        innerCtx.fillStyle = 'rgba(0, 255, 100, 0.8)';
+        innerCtx.fillText('SlAm', centerX + 80, centerY);
+        innerCtx.fillStyle = 'rgba(150, 0, 255, 0.8)';
+        innerCtx.fillText('SlIm', centerX - 80, centerY);
+        innerCtx.restore();
 
 
-    // Function to calculate time zone offset
-    const calculateTimeZoneOffset = () => {
-        const localTime = new Date();
-        const utcTime = new Date(localTime.toISOString());
-        timeZoneOffset = (localTime - utcTime) / (1000 * 60); // Get offset in minutes
-        updateUI(); // Ensure UI is updated after calculating offset
-    };
+        drawHalfRing(innerCtx, 215, 40, -Math.PI/2, 'rgb(128, 112, 20)');
+        drawHalfRing(innerCtx, 215, 40, Math.PI/2, 'rgb(30, 45, 105)');
+        innerCtx.strokeStyle = '#eee';
+        innerCtx.lineWidth = 2;
+        for (let i = 0; i < 24; i++) {
+            let angle = (i / 24) * 2 * Math.PI - Math.PI/2;
+            let outerRadius = 215;
+            let innerRadius = i % 3 === 0 ? outerRadius - 25 : outerRadius - 2;
+            let x1 = centerX + outerRadius * Math.cos(angle);
+            let y1 = centerY + outerRadius * Math.sin(angle);
+            let x2 = centerX + innerRadius * Math.cos(angle);
+            let y2 = centerY + innerRadius * Math.sin(angle);
+            innerCtx.beginPath();
+            innerCtx.moveTo(x1, y1);
+            innerCtx.lineTo(x2, y2);
+            innerCtx.stroke();
+        }
+        innerCtx.fillStyle = '#eee';
+        innerCtx.textAlign = 'center';
+        innerCtx.textBaseline = 'middle';
+        for (let i = 0; i < 24; i++) {
+            innerCtx.font = i % 3 === 0 ? '28px Arial' : '18px Arial';
+            let angle = (i / 24) * 2 * Math.PI - Math.PI/2;
+            let labelRadius = 240;
+            let lx = centerX + labelRadius * Math.cos(angle);
+            let ly = centerY + labelRadius * Math.sin(angle);
+            let hour12 = i % 12 === 0 ? 12 : i % 12;
+            innerCtx.fillText(hour12, lx, ly);
+        }
+        innerCtx.font = '28px Arial';
+        innerCtx.fillStyle = 'rgba(255, 223, 0, 0.8)';
+        innerCtx.fillText('AM', centerX + 230, centerY - 200);
+        innerCtx.fillStyle = 'rgba(0, 123, 255, 0.8)';
+        innerCtx.fillText('PM', centerX - 230, centerY - 200);
+    }
 
-    window.onload = () => {
-        calculateTimeZoneOffset();
-        setInterval(updateUI, 1000); // Update every second
-    };
+    function TimeZoneCheck() {
+        innerCtx.clearRect(0, 0, innerCanvas.width, innerCanvas.height);
+        drawHalfRing(innerCtx, 222, 87, Math.PI, 'rgba(25, 25, 25)');
+        drawHalfRing(innerCtx, 222, 87, 0, 'rgb(25, 25, 25)');
+        const tzOffsetMins = new Date().getTimezoneOffset();
+        let offsetDegrees = -tzOffsetMins * 0.25;
+        drawInnerDial(offsetDegrees);
+    }
 
-    // Event listeners
-    ['hourInput', 'minuteInput', 'secondInput', 'modeSelector'].forEach(id => {
-        selectors[id].addEventListener('input', updateManualConversion);
+    /* ==== View switching ==== */
+    document.getElementById('viewSelector').addEventListener('change', e => {
+        let clockMenu = document.getElementById('clockMenu');
+        let conversionMenu = document.getElementById('conversionMenu');
+        let dialMenu = document.getElementById('dialMenu');
+        clockMenu.style.display = 'none';
+        conversionMenu.style.display = 'none';
+        dialMenu.style.display = 'none';
+        if (e.target.value === 'clock') {
+            clockMenu.style.display = 'inline-block';
+        } else if (e.target.value === 'conversion') {
+            conversionMenu.style.display = 'inline-block';
+            if (!document.getElementById('localTime').value) {
+                let now = new Date();
+                document.getElementById('localTime').value = now.toTimeString().slice(0,5);
+            }
+            localToSliST();
+            slistToLocal();
+        } else if (e.target.value === 'dial') {
+            dialMenu.style.display = 'inline-block';
+            TimeZoneCheck();
+        }
     });
-    selectors.timeFormat.addEventListener('change', updateUI);
-</script>
 
+    document.getElementById('localTime').addEventListener('input', localToSliST);
+    document.getElementById('slour').addEventListener('input', slistToLocal);
+    document.getElementById('slourMin').addEventListener('input', slistToLocal);
+    document.getElementById('SlAmSlImToggle').addEventListener('input', slistToLocal);
+
+    setInterval(updateClock, 1000);
+    updateClock();
+    window.onload = () => {
+        let now = new Date();
+        document.getElementById('localTime').value = now.toTimeString().slice(0,5);
+    };
+
+    setInterval(TimeZoneCheck, 60000);
+</script>
 </body>
 </html>
