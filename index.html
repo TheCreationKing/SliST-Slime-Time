@@ -2,17 +2,20 @@
 <html>
 <head>
     <title>(SliST)</title>
-    <link rel="icon" type="images/svg+xml" href="Slime Vector.svg"> <!-- This is Friend -->
+    <link rel="icon" type="images/svg+xml" href="Slime Vector.svg"> <!-- This is also Friend -->
     <style>
         :root {
-            --slime-color1: #8ef58e;
-            --slime-color2: #4bc34b;
+            --slime-highlight: #b1ed93;
+            --slime-body: #44ca44;
+            --slime-shadow: #0e8928;
+            --text: #000000;
+            --box-highlight: #8ef58e;
+            --palette: 0;
         }
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #111; color: var(--slime-color1); }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #111; color: var(--slime-highlight); }
         .clock { font-size: 2em; margin: 20px; }
         input, select { margin: 5px; padding: 8px; font-size: 1em; border-radius: 10px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-        .menu { margin: 20px; }
-        .container-box { background: linear-gradient(135deg, var(--slime-color1), var(--slime-color2)); padding: 20px; border-radius: 15px; display: inline-block; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .menu { margin: 20px; }        .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         #dialMenu { background: none; box-shadow: none; }
         canvas { background: #111; border-radius: 10px; }
     </style>
@@ -29,12 +32,14 @@
 
     <!-- Clock view -->
     <div id="clockMenu" class="container-box" style="position:relative;">
-
-         <img
-            style="position:absolute; left:10px; top:-70px; z-index: -1;"
-            src="Slime Vector.svg" alt="Friend [:" class="Friend"
-            height="80"
-            width="80" />
+            <svg id="Friend" viewBox="0 0 250 240" class="Friend" style="position:absolute; left:10px; top:-70px; z-index: 2; height:80; width:80; cursor: grab;">
+            <defs/>
+            <path id="shape0" transform="matrix(1.31321419048092 0 0 1.31321419048092 7.41695530354433 54.1166745761049)" fill= var(--slime-body) stroke=var(--slime-body) stroke-width="9.6" d="M175.947 71.658C176.57 31.5112 137.749 -0.873343 87.9736 0.0179674C38.1986 0.909277 0.96 27.6583 0 71.658C0 125.738 50.5993 118.338 87.9736 118.098C125.348 117.858 175.947 125.738 175.947 71.658Z"/>
+            <path id="shape01" transform="matrix(1.31321414420711 0 0 1.31321414420711 1.01877268307119 148.849281923108)" fill=var(--slime-shadow) stroke=var(--slime-shadow) d="M185.276 0C175.66 26.728 153.724 35.8226 92.8454 37.32C36.4444 38.7073 8.69169 25.279 0 0.48004C0.619024 20.8482 8.41648 35.2538 23.3924 43.6969C28.7954 45.7445 39.0869 50.0213 53.97 51.1288C78.0049 51.2321 115.68 49.9177 138.993 50.2803C170.727 46.4496 185.027 29.5242 185.276 0Z"/>
+            <path id="shape02" transform="matrix(1.31321420815116 0 0 1.31321420815116 87.103728205985 72.5466998393282)" fill=var(--slime-highlight) d="M24.9612 0.00252821C5.09419 0.154632 -4.82475 17.3982 2.3067 24.6398C5.97497 28.3647 15.8859 27.327 27.1071 27.001C37.701 26.6933 49.5033 27.2882 56.9855 24.3012C69.0983 19.4655 58.7952 -0.256508 24.9612 0.00252821Z"/>
+            <path id="shape1" transform="matrix(1.30416347912603 0.153912885113491 -0.153912885113491 1.30416347912603 192.262126159482 101.214200323725)" fill=var(--slime-highlight) d="M14.6372 4.40357C13.7455 2.71878 6.03363 -2.30632 1.66904 1.23697C-3.91307 5.76868 6.1696 8.86183 7.68665 9.36115C14.4478 11.5865 16.5898 8.09297 14.6372 4.40357Z"/>
+            Sorry, your browser doesn't display friend...
+            </svg> 
         <div class="clock" id="slimeClock"></div>
         <div class="clock" id="slimeMilitary"></div>
     </div>
@@ -62,6 +67,35 @@
     </div>
 
 <script>
+
+    var r = document.querySelector(':root');
+    var rs = getComputedStyle(r);
+    var slimebody = ['#44ca44', '#3767cf', '#9928a1', '#dc234a'];
+    var slimehighlight = ['#b1ed93', '#a6c9f9', '#e98cf3', '#ee9bbe'];
+    var slimeshadow = ['#0e8928', '#193ab4', '#651e7e', '#910f0f'];
+    var box = ['#8ef58e', '#5a83db', '#e98cf3', '#ee9bbe'];
+    var text = ['#000', '#000', '#000', '#000'];
+
+
+    function SetColor(palette){
+        r.style.setProperty('--slime-body', slimebody[palette]);
+        r.style.setProperty('--slime-highlight', slimehighlight[palette]);
+        r.style.setProperty('--slime-shadow', slimeshadow[palette]);
+        r.style.setProperty('--text', text[palette]);
+        r.style.setProperty('--box-highlight', box[palette]);
+    }
+
+
+    function ChangeColor() {
+          var palette = parseInt(rs.getPropertyValue('--palette'));
+          palette = (palette+1)%slimebody.length;
+
+       r.style.setProperty('--palette', palette);
+        SetColor(palette);
+        //alert("The value of --palette is: " + rs.getPropertyValue('--palette'));
+    }
+
+
     /* ==== Original clock + conversion ==== */
     function toSliST(date) {
         let utcMinutes = Math.floor(date.getUTCHours() * 60 + date.getUTCMinutes());
@@ -241,6 +275,11 @@
     document.getElementById('slourMin').addEventListener('input', slistToLocal);
     document.getElementById('SlAmSlImToggle').addEventListener('input', slistToLocal);
 
+    document.addEventListener('click', function (event) {
+    if (!event.target.closest('.Friend')) return;
+    ChangeColor();
+}, false);
+
     setInterval(updateClock, 1000);
     updateClock();
     window.onload = () => {
@@ -252,5 +291,4 @@
 </script>
 </body>
 </html>
-
 
