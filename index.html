@@ -70,6 +70,7 @@
 
     var r = document.querySelector(':root');
     var rs = getComputedStyle(r);
+        //This is the list of currently added slimes, future ones will be added at a later date!
     var slimebody = ['#44ca44', '#3767cf', '#9928a1', '#dc234a'];
     var slimehighlight = ['#b1ed93', '#a6c9f9', '#e98cf3', '#ee9bbe'];
     var slimeshadow = ['#0e8928', '#193ab4', '#651e7e', '#910f0f'];
@@ -83,6 +84,7 @@
         r.style.setProperty('--slime-shadow', slimeshadow[palette]);
         r.style.setProperty('--text', text[palette]);
         r.style.setProperty('--box-highlight', box[palette]);
+       r.style.setProperty('--palette', palette);
     }
 
 
@@ -90,13 +92,20 @@
           var palette = parseInt(rs.getPropertyValue('--palette'));
           palette = (palette+1)%slimebody.length;
 
-       r.style.setProperty('--palette', palette);
+       localStorage.setItem('palette', palette);
         SetColor(palette);
-        //alert("The value of --palette is: " + rs.getPropertyValue('--palette'));
     }
 
+    document.addEventListener("DOMContentLoaded", function() {
+  let palette = localStorage.getItem("palette");
+  if (palette !== null) {
+   SetColor(parseInt(palette))
+  } else {}
+}
+);
 
-    /* ==== Original clock + conversion ==== */
+
+    /* ==== The Local to SliST to Local conversion script ==== */
     function toSliST(date) {
         let utcMinutes = Math.floor(date.getUTCHours() * 60 + date.getUTCMinutes());
         let totalSlours = utcMinutes / 72;
@@ -143,7 +152,7 @@
         document.getElementById('slimeToLocalResult').innerText = `${(localHours%12||12).toString().padStart(2,'0')}:${localMins.toString().padStart(2,'0') + (localHours >= 12 ? " PM":" AM")}`;
     }
 
-    /* ==== Dial code merged from second HTML ==== */
+    /* ==== This is the code for the dial, added from a demonstration html file ==== */
     const innerCanvas = document.getElementById('DialRenderer');
     const innerCtx = innerCanvas.getContext('2d');
     const centerX = innerCanvas.width / 2;
@@ -291,4 +300,3 @@
 </script>
 </body>
 </html>
-
