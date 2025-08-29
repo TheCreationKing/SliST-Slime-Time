@@ -11,11 +11,13 @@
             --text: #000000;
             --box-highlight: #8ef58e;
             --palette: 0;
+            --background: #111;
         }
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #111; color: var(--slime-highlight); }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: var(--background); color: var(--slime-highlight); }
         .clock { font-size: 2em; margin: 20px; }
         input, select { margin: 5px; padding: 8px; font-size: 1em; border-radius: 10px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-        .menu { margin: 20px; }        .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .menu { margin: 20px; }
+        .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         #dialMenu { background: none; box-shadow: none; }
         canvas { background: #111; border-radius: 10px; }
     </style>
@@ -76,6 +78,7 @@
     var slimeshadow = ['#0e8928', '#193ab4', '#651e7e', '#910f0f'];
     var box = ['#8ef58e', '#5a83db', '#e98cf3', '#ee9bbe'];
     var text = ['#000', '#000', '#000', '#000'];
+    var background = ['#111', '#111', '#111', '#111']
 
 
     function SetColor(palette){
@@ -85,6 +88,7 @@
         r.style.setProperty('--text', text[palette]);
         r.style.setProperty('--box-highlight', box[palette]);
        r.style.setProperty('--palette', palette);
+       r.style.setProperty('--background', background[palette]);
     }
 
 
