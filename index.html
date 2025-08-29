@@ -11,7 +11,7 @@
         .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); 
         -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;}
         #dialMenu { background: none; box-shadow: none; }
-        canvas { background: #111; border-radius: 10px; }
+        canvas { background: #111; border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -49,14 +49,28 @@
     </div>
 
     <!-- Dial view -->
-    <div id="dialMenu" style="display:none;">
+    <div id="dialMenu" style="display:none; position:relative">
+        <style>
+            .AMPM {
+                display:flex;
+                width:80px;
+                height:50px; 
+                position:absolute; 
+                background: #111;
+                 border-radius: 20%;
+                 top:0px; 
+                 font-size: 28px; 
+                 font:Arial;
+                 align-items: center;
+                justify-content: center;
+            }
+        </style>
         <canvas id="DialRenderer" width="520" height="520"></canvas>
-    </div>
+            <div class="AMPM" style="color:#0080ff; left:-10px;">PM</div>
+            <div class="AMPM" style="color:#fff000; right:-10px; ">AM</div>
+            </div>
 <script type="module" src="Friend.js"></script>
 <script>
-
-
-
 
     var r = document.querySelector(':root');
     var rs = getComputedStyle(r);
@@ -67,7 +81,6 @@
     var box = ['#8ef58e', '#F4FFBC', '#A6D5FF', '#5a83db', '#e98cf3', '#ee9bbe', '#FEEEF3', '#FCFFC9', '#FFD182', '#DCC37F', '#774E30', '#211c23', '#b8b7b8'];
     var text = ['#000000', '#000000', '#000000', '#000000', '#000000', '#000000', '#560040', '#552D00', '#000000', '#1e0d02', '#c8aeb5', '#EEEEEE', '#1a272e'];
     var background = ['#111111', '#1b341e', '#17161b', '#111111', '#111111', '#1c0000', '#795373', '#B98224', '#111111', '#593e38', '#332428', '#433749', '#4d5758']
-
 
 
 
@@ -265,11 +278,6 @@ let transitionInterval = null;
             let hour12 = i % 12 === 0 ? 12 : i % 12;
             innerCtx.fillText(hour12, lx, ly);
         }
-        innerCtx.font = '28px Arial';
-        innerCtx.fillStyle = 'rgba(255, 223, 0, 0.8)';
-        innerCtx.fillText('AM', centerX + 230, centerY - 200);
-        innerCtx.fillStyle = 'rgba(0, 123, 255, 0.8)';
-        innerCtx.fillText('PM', centerX - 230, centerY - 200);
     }
 
     function TimeZoneCheck() {
