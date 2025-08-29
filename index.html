@@ -17,7 +17,8 @@
         .clock { font-size: 2em; margin: 20px; }
         input, select { margin: 5px; padding: 8px; font-size: 1em; border-radius: 10px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
         .menu { margin: 20px; }
-        .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .container-box { background: linear-gradient(135deg, var(--box-highlight), var(--slime-body)); padding: 20px; border-radius: 15px; display: inline-block; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.8); 
+        -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;}
         #dialMenu { background: none; box-shadow: none; }
         canvas { background: #111; border-radius: 10px; }
     </style>
@@ -72,13 +73,27 @@
 
     var r = document.querySelector(':root');
     var rs = getComputedStyle(r);
-        //This is the list of currently added slimes, future ones will be added at a later date!
-    var slimebody = ['#44ca44', '#3767cf', '#9928a1', '#dc234a'];
-    var slimehighlight = ['#b1ed93', '#a6c9f9', '#e98cf3', '#ee9bbe'];
-    var slimeshadow = ['#0e8928', '#193ab4', '#651e7e', '#910f0f'];
-    var box = ['#8ef58e', '#5a83db', '#e98cf3', '#ee9bbe'];
-    var text = ['#000', '#000', '#000', '#000'];
-    var background = ['#111', '#111', '#111', '#111']
+    
+    var slimebody = ['#44ca44', '#CEF06E', '#7EA7FF', '#3767cf', '#9928a1', '#dc234a', '#FEDEE6', '#FBF365', '#FD952B', '#B98224', '#231001', '#1E1A1F', '#DEDEDE'];
+    var slimehighlight = ['#b1ed93', '#F4FFBC', '#A6D5FF', '#a6c9f9', '#e98cf3', '#ee9bbe', '#FEEEF3', '#FCFFC9', '#FFD182', '#DCC37F', '#774E30', '#EEEEEE', '#EEEEEE'];
+    var slimeshadow = ['#0e8928', '#7FD130', '#5664E6', '#193ab4', '#651e7e', '#910f0f', '#FEA7C8', '#E6CC45', '#FF7D1F', '#552D00', '#080401', '#110E12', '#9E9E9E'];
+    var box = ['#8ef58e', '#F4FFBC', '#A6D5FF', '#5a83db', '#e98cf3', '#ee9bbe', '#FEEEF3', '#FCFFC9', '#FFD182', '#DCC37F', '#774E30', '#211c23', '#b8b7b8'];
+    var text = ['#000000', '#000000', '#000000', '#000000', '#000000', '#000000', '#560040', '#552D00', '#000000', '#1e0d02', '#c8aeb5', '#EEEEEE', '#1a272e'];
+    var background = ['#111111', '#1b341e', '#17161b', '#111111', '#111111', '#1c0000', '#795373', '#B98224', '#111111', '#593e38', '#332428', '#433749', '#4d5758']
+
+
+
+function blendColors(colorA, colorB, amount) {
+
+  const [rA, gA, bA] = colorA.match(/\w\w/g).map((c) => parseInt(c, 16));
+  const [rB, gB, bB] = colorB.match(/\w\w/g).map((c) => parseInt(c, 16));
+
+  const r = Math.round(rA + (rB - rA) * amount).toString(16).padStart(2, '0');
+  const g = Math.round(gA + (gB - gA) * amount).toString(16).padStart(2, '0');
+  const b = Math.round(bA + (bB - bA) * amount).toString(16).padStart(2, '0');
+
+  return '#' + r + g + b;
+}
 
 
     function SetColor(palette){
@@ -91,13 +106,40 @@
        r.style.setProperty('--background', background[palette]);
     }
 
+            function SmoothColor(oldpalette, newpalette, t) {
+                r.style.setProperty('--slime-body',
+                    blendColors(slimebody[oldpalette], slimebody[newpalette], t));
+                r.style.setProperty('--slime-highlight',
+                    blendColors(slimehighlight[oldpalette], slimehighlight[newpalette], t));
+                r.style.setProperty('--slime-shadow',
+                    blendColors(slimeshadow[oldpalette], slimeshadow[newpalette], t));
+                r.style.setProperty('--text',
+                    blendColors(text[oldpalette], text[newpalette], t));
+                r.style.setProperty('--box-highlight',
+                    blendColors(box[oldpalette], box[newpalette], t));
+                r.style.setProperty('--background',
+                    blendColors(background[oldpalette], background[newpalette], t));
+            }
+
+let transitionInterval = null;
 
     function ChangeColor() {
-          var palette = parseInt(rs.getPropertyValue('--palette'));
-          palette = (palette+1)%slimebody.length;
-
-       localStorage.setItem('palette', palette);
-        SetColor(palette);
+            if (transitionInterval) {} else {
+                      var palette = parseInt(rs.getPropertyValue('--palette'));
+                      var newpalette = (palette+1)%slimebody.length;
+                      localStorage.setItem('palette', newpalette);
+                                        var duration = 200
+                                        var i = 0
+                                        var steps = 10
+                                            transitionInterval = setInterval(function(){
+                                                    i++;
+                                                    SmoothColor(palette,newpalette,i/steps)
+                                                if(i >= steps) {
+                                                    SetColor(newpalette);
+                                                    clearInterval(transitionInterval);
+                                                    transitionInterval = null;
+                                                    }
+                                            }, duration/steps);}
     }
 
     document.addEventListener("DOMContentLoaded", function() {
