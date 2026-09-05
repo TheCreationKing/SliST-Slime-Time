@@ -16,13 +16,25 @@
 </head>
 <body>
     <h1>Universal Slime Time</h1>
+
+
     <div class="menu">
         <select id="viewSelector">
             <option value="clock">Clock</option>
             <option value="conversion">Conversion</option>
             <option value="dial">Dial View</option>
         </select>
+        <style>
+            select {
+                font: inherit;
+                padding: 0.5rem;
+                background: linear-gradient(135deg, var(--box-highlight), var(--slime-body));
+                color: var(--text);
+            }
+        </style>
     </div>
+
+
 
     <!-- Clock view -->
     <div id="clockMenu" class="container-box" style="position:relative;">
@@ -191,7 +203,7 @@ let transitionInterval = null;
         document.getElementById('slimeToLocalResult').innerText = `${(localHours%12||12).toString().padStart(2,'0')}:${localMins.toString().padStart(2,'0') + (localHours >= 12 ? " PM":" AM")}`;
     }
 
-    /* ==== This is the code for the dial, added from a demonstration html file ==== */
+    /* ==== This is the code for generating the dial, eventually I want to remake it entirely ==== */
     const innerCanvas = document.getElementById('DialRenderer');
     const innerCtx = innerCanvas.getContext('2d');
     const centerX = innerCanvas.width / 2;
