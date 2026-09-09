@@ -5,6 +5,7 @@ class FriendSlime extends HTMLElement {
     shadow.innerHTML = `
           <style>
                               .Friend {
+                              transform-origin: 50% 90%;
                   transition: transform 0.2s ease, filter 0.2s ease;
                   cursor: grab;
                 }
@@ -13,7 +14,7 @@ class FriendSlime extends HTMLElement {
                     transition: transform 0.2s ease;
                 }
                         .Friend:active {
-                    transform: scale(0.95);
+                    transform: scale(1.1, 0.8);
                     transition: transform 0.2s ease;
                     cursor: grabbing;
                 }
