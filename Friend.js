@@ -4,22 +4,22 @@ class FriendSlime extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
           <style>
-                              .Friend {
-                              transform-origin: 50% 90%;
-                  transition: transform 0.2s ease, filter 0.2s ease;
-                  cursor: grab;
+                        .Friend {
+                  transform-origin: 50% 90%;
+                  transition: transform 0.2s ease;
                 }
                         .Friend:hover {
                     transform: scale(1.02);
                     transition: transform 0.2s ease;
+                    cursor: grab;
                 }
                         .Friend:active {
                     transform: scale(1.1, 0.8);
-                    transition: transform 0.2s ease;
+                    animation: squibble 0.2s ease forwards;
                     cursor: grabbing;
                 }
           </style>
-            <svg id="Friend" viewBox="0 0 250 240" class="Friend" style="position:absolute; z-index: 2; height:80; width:80;">
+            <svg id="Friend" viewBox="0 0 250 240" class="Friend" style="position:absolute; z-index: 2; height:80px; width:80px;">
             <defs/>
             <path id="shape0" transform="matrix(1.31321419048092 0 0 1.31321419048092 7.41695530354433 54.1166745761049)" fill= var(--slime-body) stroke=var(--slime-body) stroke-width="9.6" d="M175.947 71.658C176.57 31.5112 137.749 -0.873343 87.9736 0.0179674C38.1986 0.909277 0.96 27.6583 0 71.658C0 125.738 50.5993 118.338 87.9736 118.098C125.348 117.858 175.947 125.738 175.947 71.658Z"/>
             <path id="shape01" transform="matrix(1.31321414420711 0 0 1.31321414420711 1.01877268307119 148.849281923108)" fill=var(--slime-shadow) stroke=var(--slime-shadow) d="M185.276 0C175.66 26.728 153.724 35.8226 92.8454 37.32C36.4444 38.7073 8.69169 25.279 0 0.48004C0.619024 20.8482 8.41648 35.2538 23.3924 43.6969C28.7954 45.7445 39.0869 50.0213 53.97 51.1288C78.0049 51.2321 115.68 49.9177 138.993 50.2803C170.727 46.4496 185.027 29.5242 185.276 0Z"/>
