@@ -12,6 +12,22 @@
         -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;}
         #dialMenu { background: none; box-shadow: none; }
         .dropshadow {text-shadow: 0 2px 6px rgba(0,0,0,0.3)}
+        .OuterSelect {
+                font: inherit;
+                padding: 0.5rem;
+                background: linear-gradient(135deg, var(--box-highlight), var(--slime-body));
+                color: var(--text);
+                background-color: var(--slime-body);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            }
+        .InnerSelect {
+                font: inherit;
+                padding: 0.5rem;
+                background: linear-gradient(135deg, color-mix(in srgb, var(--slime-body) 70%, var(--background)), color-mix(in srgb, var(--slime-body) 40%, var(--background)));
+                color: var(--text);
+                background-color: var(--slime-body);
+                box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+            }
         canvas { background: #111; border-radius: 50%; }
     </style>
 </head>
@@ -20,20 +36,11 @@
 
 
     <div class="menu">
-        <select id="viewSelector">
+        <select id="viewSelector" class="OuterSelect"">
             <option value="clock">Clock</option>
             <option value="conversion">Conversion</option>
             <option value="dial">Dial View</option>
         </select>
-        <style>
-            select {
-                font: inherit;
-                padding: 0.5rem;
-                background: linear-gradient(135deg, var(--box-highlight), var(--slime-body));
-                color: var(--text);
-                background-color: var(--slime-body);
-            }
-        </style>
     </div>
 
 
@@ -47,14 +54,15 @@
 
     <!-- Conversion view -->
     <div id="conversionMenu" class="container-box" style="display:none;">
+        <friend-slime style="position:relative ; left:-240px; top:-90px;"></friend-slime>
         <div>
-            <label>Local Time: <input type="time" id="localTime"></label>
+            <label>Local Time: <input class="InnerSelect" type="time" id="localTime"></label>
             <p id="localToSlimeResult"></p>
         </div>
         <div>
-            <label>Slour (0–10): <input type="number" id="slour" min="0" max="10"></label>
-            <label>Minutes (0–71): <input type="number" id="slourMin" min="0" max="71"></label>
-            <select id="SlAmSlImToggle">
+            <label>Slour (0–10): <input class="InnerSelect" type="number" id="slour" min="0" max="10"></label>
+            <label>Minutes (0–71): <input class="InnerSelect" type="number" id="slourMin" min="0" max="71"></label>
+            <select id="SlAmSlImToggle" class="InnerSelect">
                 <option value="0">SlAm</option>
                 <option value="10">SlIm</option>
               </select>
